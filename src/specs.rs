@@ -1,4 +1,4 @@
-mod tensor_spec;
+pub mod tensor_spec;
 
 use tensor_spec::TensorSpec;
 
