@@ -1,7 +1,7 @@
 use crate::dtypes::DType;
 
 pub struct TensorSpec {
-    dim_sizes: Vec<u32>,
+    pub dim_sizes: Vec<u32>,
     dtype: DType,
     contiguous_abs: usize,
     aligned: bool,
