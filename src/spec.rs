@@ -3,7 +3,7 @@ use std::fmt::{Debug, Formatter};
 pub type Spec = MatMul;
 
 /// x > 0, y > 0
-#[derive(Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct MatMul {
     pub(crate) x: usize,
     pub(crate) y: usize,
