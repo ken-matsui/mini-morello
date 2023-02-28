@@ -10,6 +10,9 @@ anyhow = { version = "1.0.69", features = ["backtrace"] }
 debug_print = "1.0.0"
 threadpool = "1.8.1"
 
+[dev-dependencies]
+criterion = "0.4.0"
+
 # The bench profile inherits the settings from the release profile.
 # https://doc.rust-lang.org/cargo/reference/profiles.html#bench
 [profile.release]
