@@ -10,15 +10,19 @@ pub(crate) type Cost = i32;
 fn frac(a: usize, b: usize) -> f32 {
     a as f32 / b as f32
 }
+#[inline]
+fn frac_ceil(a: usize, b: usize) -> i32 {
+    frac(a, b).ceil() as i32
+}
 
 pub(crate) fn cost(imp: Impl, target_spec: Spec, dp: DpTablePtr<Elem>) -> Cost {
     match imp {
         Impl::Mult => 1, // Base Case
         Impl::Loop { child } => {
-            let loop_cost = frac(target_spec.x, child.x) * frac(target_spec.y, child.y);
-            let child_cost = unsafe { dp.get(dec(child.x), dec(child.y)) };
+            let loop_cost = frac_ceil(target_spec.x, child.x) * frac_ceil(target_spec.y, child.y);
+            let child_cost = unsafe { dp.get(dec(child.x), dec(child.y)).1 };
             // loop_cost * child_cost = this impl's cost
-            (loop_cost * child_cost.1 as f32).ceil() as Cost
+            (loop_cost * child_cost) as Cost
         }
     }
 }
