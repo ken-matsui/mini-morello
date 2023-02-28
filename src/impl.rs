@@ -2,7 +2,7 @@ use crate::spec::MatMul;
 use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]
-pub(crate) enum Impl {
+pub enum Impl {
     // Multiplication
     Mult,
     Loop { child: MatMul },
