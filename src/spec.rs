@@ -19,6 +19,6 @@ impl MatMul {
 
 impl Debug for MatMul {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "MatMul ({}x{})", self.x, self.y)
+        write!(f, "MatMul({}x{})", self.x, self.y)
     }
 }
