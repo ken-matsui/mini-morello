@@ -1,12 +1,14 @@
 use crate::spec::MatMul;
 use std::fmt::{Debug, Formatter};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Impl {
     // Multiplication
     Mult,
     Loop { child: MatMul },
 }
+
+impl Eq for Impl {}
 
 impl Default for Impl {
     fn default() -> Self {
