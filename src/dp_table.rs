@@ -6,7 +6,7 @@ pub(crate) struct DpTablePtr<V>(pub(crate) *mut Vec<V>);
 unsafe impl<V> Sync for DpTablePtr<V> {}
 unsafe impl<V> Send for DpTablePtr<V> {}
 
-impl<V: Copy> DpTablePtr<V> {
+impl<V> DpTablePtr<V> {
     #[inline]
     pub(crate) unsafe fn get(&self, x: usize, y: usize) -> &V {
         &((*self.0.add(x))[y])
