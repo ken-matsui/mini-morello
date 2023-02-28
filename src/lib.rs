@@ -7,3 +7,4 @@ pub(crate) mod r#impl;
 pub(crate) mod spec;
 
 pub use dp::dp;
+pub use spec::Spec;
