@@ -1,8 +1,9 @@
 #![feature(let_chains)]
 
-pub mod dtypes;
-pub mod r#impl;
-pub mod search;
-pub mod specs;
-pub mod tensor;
-pub mod tiling;
+pub(crate) mod cost;
+pub(crate) mod dp;
+pub(crate) mod dp_table;
+pub(crate) mod r#impl;
+pub(crate) mod spec;
+
+pub use dp::dp;
