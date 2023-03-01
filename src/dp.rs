@@ -2,6 +2,7 @@ use crate::cost::{cost, Cost};
 use crate::dp_table::{DpTable, DpTablePtr};
 use crate::r#impl::Impl;
 use crate::spec::{MatMul, Spec};
+use crate::util::{dec, inc};
 
 use debug_print::debug_println as dprintln;
 use threadpool::ThreadPool;
@@ -15,10 +16,16 @@ pub(crate) fn compute_block(
     from_y: usize,
     to_y: usize,
 ) {
-    for x in from_x..=to_x {
-        for y in from_y..=to_y {
-            let mut best_impl = unsafe { dp.get(0, 0).clone().0 };
-            let mut min_cost = cost(best_impl.clone(), Spec::new(0, 0), dp.clone());
+    for x in from_x..to_x {
+        for y in from_y..to_y {
+            if x == 0 && y == 0 {
+                // Assume [0][0] is already calculated.
+                continue;
+            }
+            let base_spec = Spec::new(inc(x), inc(y));
+
+            let mut best_impl = Impl::default();
+            let mut min_cost = Cost::MAX;
 
             for dep_x in 0..=x {
                 for dep_y in 0..=y {
@@ -28,12 +35,13 @@ pub(crate) fn compute_block(
                     }
 
                     let dep_impl = Impl::Loop {
-                        child: MatMul::new(dep_x, dep_y),
+                        child: MatMul::new(inc(dep_x), inc(dep_y)),
                     };
-
-                    let dep = unsafe { dp.get(dep_x, dep_y) };
-                    let dep_cost = cost(dep_impl.clone(), Spec::new(x, y), dp.clone());
-                    if min_cost > dep_cost {
+                    let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
+                    dprintln!(
+                        "base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}"
+                    );
+                    if min_cost >= dep_cost {
                         min_cost = dep_cost;
                         best_impl = dep_impl;
                     }
@@ -43,6 +51,7 @@ pub(crate) fn compute_block(
             unsafe {
                 dp.insert(x, y, (best_impl.clone(), min_cost));
             }
+            dprintln!();
         }
     }
 }
@@ -54,6 +63,7 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
     let Y = spec.y;
 
     let mut dp = DpTable::<Elem>::new(X, Y);
+    dp.insert(0, 0, (Impl::Mult, 1));
     let dp_p = dp.as_mut_ptr();
 
     let n_workers = if bsize > X || bsize > Y {
@@ -66,7 +76,7 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
     let pool = ThreadPool::new(n_workers);
 
     let mut offset = 0;
-    while offset <= X + Y {
+    while offset <= (X + Y - 2) {
         let mut y = 0;
         while y <= offset {
             let dp_p = dp_p.clone();
@@ -74,9 +84,9 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
             pool.execute(move || {
                 let x = offset - y;
                 if x <= X && y <= Y {
-                    let to_x = if x + bsize - 1 < X { x + bsize - 1 } else { X };
-                    let to_y = if y + bsize - 1 < Y { y + bsize - 1 } else { Y };
-                    dprintln!("({x}, {y})..=({to_x}, {to_y})");
+                    let to_x = if x + bsize < X { x + bsize } else { X };
+                    let to_y = if y + bsize < Y { y + bsize } else { Y };
+                    dprintln!("({x}, {y})..({to_x}, {to_y})");
                     compute_block(dp_p, x, to_x, y, to_y);
                 }
             });
@@ -90,7 +100,7 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
     }
     dprintln!("\n{:?}", dp);
 
-    dp.get(X, Y).clone()
+    dp.get(dec(X), dec(Y)).clone()
 }
 
 #[cfg(test)]
@@ -99,6 +109,14 @@ mod tests {
 
     #[test]
     fn test_dp() {
-        assert_eq!(dp(Spec::new(4, 4), 2), (Impl::Mult, 1)); // FIXME
+        assert_eq!(
+            dp(Spec::new(4, 4), 2),
+            (
+                Impl::Loop {
+                    child: MatMul::new(4, 2)
+                },
+                16
+            )
+        );
     }
 }
