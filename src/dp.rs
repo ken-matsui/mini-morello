@@ -41,7 +41,10 @@ pub(crate) fn compute_block(
                     dprintln!(
                         "base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}"
                     );
+
                     if min_cost >= dep_cost {
+                        // >=: Take latter one if it has the same cost
+                        // >: Use the first impl even if there is the same cost
                         min_cost = dep_cost;
                         best_impl = dep_impl;
                     }
@@ -109,6 +112,16 @@ mod tests {
 
     #[test]
     fn test_dp() {
+        assert_eq!(dp(Spec::new(1, 1), 1), (Impl::Mult, 1));
+        assert_eq!(
+            dp(Spec::new(2, 2), 1),
+            (
+                Impl::Loop {
+                    child: MatMul::new(2, 1)
+                },
+                4
+            )
+        );
         assert_eq!(
             dp(Spec::new(4, 4), 2),
             (
