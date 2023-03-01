@@ -36,7 +36,7 @@ impl<V: Default + Clone> DpTable<V> {
         Self {
             X: x,
             Y: y,
-            data: vec![vec![V::default(); x + 1]; y + 1],
+            data: vec![vec![V::default(); x]; y],
         }
     }
     #[inline]
@@ -56,8 +56,8 @@ impl<V: Default + Clone> DpTable<V> {
 
 impl<V: Default + Clone + Debug> Debug for DpTable<V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for x in 0..=self.X {
-            for y in 0..=self.Y {
+        for x in 0..self.X {
+            for y in 0..self.Y {
                 write!(f, "{:?} ", self.get(x, y))?;
             }
             writeln!(f)?;
