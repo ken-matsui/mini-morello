@@ -20,7 +20,7 @@ pub(crate) fn cost(base_spec: Spec, imp: Impl, dp: DpTablePtr<Elem>) -> Cost {
         Impl::Mult => 1, // Base Case
         Impl::Loop { child } => {
             let loop_cost = frac_ceil(base_spec.x, child.x) * frac_ceil(base_spec.y, child.y);
-            let child_cost = unsafe { dp.get(dec(child.x), dec(child.y)).1 };
+            let child_cost = unsafe { dp.get(dec(child.x), dec(child.y), dec(child.z)).1 };
             // loop_cost * child_cost = this impl's cost
             (loop_cost * child_cost) as Cost
         }

@@ -4,58 +4,81 @@ use crate::r#impl::Impl;
 use crate::spec::{MatMul, Spec};
 use crate::util::{dec, inc};
 
+use std::cmp::min;
+
 use debug_print::debug_println as dprintln;
 use threadpool::ThreadPool;
 
 pub(crate) type Elem = (Impl, Cost);
 
+// serial
+pub(crate) fn find_best_impl(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
+    let base_spec = Spec::new(inc(x), inc(y), inc(z));
+
+    let mut best_impl = Impl::default();
+    let mut min_cost = Cost::MAX;
+
+    for dep_x in 0..=x {
+        for dep_y in 0..=y {
+            for dep_z in 0..=z {
+                if dep_x == x && dep_y == y && dep_z == z {
+                    // skip itself
+                    continue;
+                }
+
+                let dep_impl = Impl::Loop {
+                    child: MatMul::new(inc(dep_x), inc(dep_y), inc(dep_z)),
+                };
+                let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
+                dprintln!("base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}");
+
+                if min_cost >= dep_cost {
+                    // >=: Take latter one if it has the same cost
+                    // >: Use the first impl even if there is the same cost
+                    min_cost = dep_cost;
+                    best_impl = dep_impl;
+                }
+            }
+        }
+    }
+
+    (best_impl.clone(), min_cost)
+}
+
+// serial
 pub(crate) fn compute_block(
     dp: DpTablePtr<Elem>,
     from_x: usize,
     to_x: usize,
     from_y: usize,
     to_y: usize,
+    from_z: usize,
+    to_z: usize,
 ) {
     for x in from_x..to_x {
         for y in from_y..to_y {
-            if x == 0 && y == 0 {
-                // Assume [0][0] is already calculated.
-                continue;
-            }
-            let base_spec = Spec::new(inc(x), inc(y));
-
-            let mut best_impl = Impl::default();
-            let mut min_cost = Cost::MAX;
-
-            for dep_x in 0..=x {
-                for dep_y in 0..=y {
-                    if dep_x == x && dep_y == y {
-                        // skip itself
-                        continue;
-                    }
-
-                    let dep_impl = Impl::Loop {
-                        child: MatMul::new(inc(dep_x), inc(dep_y)),
-                    };
-                    let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
-                    dprintln!(
-                        "base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}"
-                    );
-
-                    if min_cost >= dep_cost {
-                        // >=: Take latter one if it has the same cost
-                        // >: Use the first impl even if there is the same cost
-                        min_cost = dep_cost;
-                        best_impl = dep_impl;
-                    }
+            for z in from_z..to_z {
+                if x == 0 && y == 0 && z == 0 {
+                    // Assume that [0][0][0] is already calculated.
+                    continue;
                 }
-            }
 
-            unsafe {
-                dp.insert(x, y, (best_impl.clone(), min_cost));
+                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                unsafe {
+                    dp.insert(x, y, z, (best_impl, min_cost));
+                }
+                dprintln!();
             }
-            dprintln!();
         }
+    }
+}
+
+#[allow(non_snake_case)]
+fn calc_workers(bsize: usize, X: usize, Y: usize, Z: usize) -> usize {
+    if bsize > X || bsize > Y || bsize > Z {
+        1
+    } else {
+        min(min(X, Y), Z) / bsize
     }
 }
 
@@ -64,46 +87,37 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
     let X = spec.x;
     #[allow(non_snake_case)]
     let Y = spec.y;
+    #[allow(non_snake_case)]
+    let Z = spec.z;
 
-    let mut dp = DpTable::<Elem>::new(X, Y);
-    dp.insert(0, 0, (Impl::Mult, 1));
+    let mut dp = DpTable::<Elem>::new(X, Y, Z);
+    dp.insert(0, 0, 0, (Impl::Mult, 1));
     let dp_p = dp.as_mut_ptr();
 
-    let n_workers = if bsize > X || bsize > Y {
-        1
-    } else if X / bsize >= Y / bsize {
-        X / bsize // 1000/100 = max 10 diagonal blocks in the middle
-    } else {
-        Y / bsize
-    };
-    let pool = ThreadPool::new(n_workers);
+    let pool = ThreadPool::new(calc_workers(bsize, X, Y, Z));
+    for offset in (0..=(X + Y + Z - 3)).step_by(bsize) {
+        for z in (0..=offset).step_by(bsize) {
+            for y in (0..=(offset - z)).step_by(bsize) {
+                let dp_p = dp_p.clone();
 
-    let mut offset = 0;
-    while offset <= (X + Y - 2) {
-        let mut y = 0;
-        while y <= offset {
-            let dp_p = dp_p.clone();
-
-            pool.execute(move || {
-                let x = offset - y;
-                if x <= X && y <= Y {
-                    let to_x = if x + bsize < X { x + bsize } else { X };
-                    let to_y = if y + bsize < Y { y + bsize } else { Y };
-                    dprintln!("({x}, {y})..({to_x}, {to_y})");
-                    compute_block(dp_p, x, to_x, y, to_y);
-                }
-            });
-
-            y += bsize; // step_by
+                pool.execute(move || {
+                    let x = offset - y;
+                    if x < X && y < Y && z < Z {
+                        let to_x = if x + bsize < X { x + bsize } else { X };
+                        let to_y = if y + bsize < Y { y + bsize } else { Y };
+                        let to_z = if z + bsize < Z { z + bsize } else { Z };
+                        dprintln!("({x}, {y}, {z})..({to_x}, {to_y}, {to_z})");
+                        compute_block(dp_p, x, to_x, y, to_y, z, to_z);
+                    }
+                });
+            }
         }
         dprintln!();
         pool.join();
-
-        offset += bsize; // step_by
     }
     dprintln!("\n{:?}", dp);
 
-    dp.get(dec(X), dec(Y)).clone()
+    dp.get(dec(X), dec(Y), dec(Z)).clone()
 }
 
 #[cfg(test)]
@@ -112,21 +126,21 @@ mod tests {
 
     #[test]
     fn test_dp() {
-        assert_eq!(dp(Spec::new(1, 1), 1), (Impl::Mult, 1));
+        assert_eq!(dp(Spec::new(1, 1, 1), 1), (Impl::Mult, 1));
         assert_eq!(
-            dp(Spec::new(2, 2), 1),
+            dp(Spec::new(2, 2, 1), 1),
             (
                 Impl::Loop {
-                    child: MatMul::new(2, 1)
+                    child: MatMul::new(2, 1, 1)
                 },
                 4
             )
         );
         assert_eq!(
-            dp(Spec::new(4, 4), 2),
+            dp(Spec::new(4, 4, 1), 2),
             (
                 Impl::Loop {
-                    child: MatMul::new(4, 2)
+                    child: MatMul::new(4, 2, 1)
                 },
                 16
             )
