@@ -9,7 +9,7 @@ fn bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("DP");
     group.sample_size(10); // 10 is minimum required; default is 100
     #[allow(clippy::single_element_loop)]
-    for parameter in [bsize].iter() {
+    for parameter in [10, 20, 30].iter() {
         group.throughput(Throughput::Elements(*parameter as u64));
         group.bench_with_input(
             BenchmarkId::new("parallel", parameter),
