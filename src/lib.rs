@@ -9,3 +9,5 @@ pub(crate) mod util;
 
 pub use dp::dp;
 pub use spec::Spec;
+
+pub use dp::*;

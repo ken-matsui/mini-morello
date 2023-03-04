@@ -12,7 +12,7 @@ use threadpool::ThreadPool;
 pub(crate) type Elem = (Impl, Cost);
 
 // serial
-pub(crate) fn find_best_impl(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
+fn find_best_impl(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
     let base_spec = Spec::new(inc(x), inc(y), inc(z));
 
     let mut best_impl = Impl::default();
@@ -45,8 +45,9 @@ pub(crate) fn find_best_impl(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize)
     (best_impl.clone(), min_cost)
 }
 
+type ComputeBlockFn = fn(DpTablePtr<Elem>, usize, usize, usize, usize, usize, usize);
 // serial
-pub(crate) fn compute_block(
+fn compute_block(
     dp: DpTablePtr<Elem>,
     from_x: usize,
     to_x: usize,
@@ -82,7 +83,8 @@ fn calc_workers(bsize: usize, X: usize, Y: usize, Z: usize) -> usize {
     }
 }
 
-pub fn dp(spec: Spec, bsize: usize) -> Elem {
+/// bsize: block size such that bsize^3
+fn dp_impl(spec: Spec, bsize: usize, compute_block_fn: ComputeBlockFn) -> Elem {
     #[allow(non_snake_case)]
     let X = spec.x;
     #[allow(non_snake_case)]
@@ -107,7 +109,7 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
                         let to_y = if y + bsize < Y { y + bsize } else { Y };
                         let to_z = if z + bsize < Z { z + bsize } else { Z };
                         dprintln!("({x}, {y}, {z})..({to_x}, {to_y}, {to_z})");
-                        compute_block(dp_p, x, to_x, y, to_y, z, to_z);
+                        compute_block_fn(dp_p, x, to_x, y, to_y, z, to_z);
                     }
                 });
             }
@@ -118,6 +120,185 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
     dprintln!("\n{:?}", dp);
 
     dp.get(dec(X), dec(Y), dec(Z)).clone()
+}
+
+pub fn dp(spec: Spec, bsize: usize) -> Elem {
+    dp_impl(spec, bsize, compute_block)
+}
+
+fn compute_block_xyz(
+    dp: DpTablePtr<Elem>,
+    from_x: usize,
+    to_x: usize,
+    from_y: usize,
+    to_y: usize,
+    from_z: usize,
+    to_z: usize,
+) {
+    for x in from_x..to_x {
+        for y in from_y..to_y {
+            for z in from_z..to_z {
+                if x == 0 && y == 0 && z == 0 {
+                    // Assume that [0][0][0] is already calculated.
+                    continue;
+                }
+
+                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                unsafe {
+                    dp.insert(x, y, z, (best_impl, min_cost));
+                }
+                dprintln!();
+            }
+        }
+    }
+}
+fn compute_block_xzy(
+    dp: DpTablePtr<Elem>,
+    from_x: usize,
+    to_x: usize,
+    from_y: usize,
+    to_y: usize,
+    from_z: usize,
+    to_z: usize,
+) {
+    for x in from_x..to_x {
+        for z in from_z..to_z {
+            for y in from_y..to_y {
+                if x == 0 && y == 0 && z == 0 {
+                    // Assume that [0][0][0] is already calculated.
+                    continue;
+                }
+
+                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                unsafe {
+                    dp.insert(x, y, z, (best_impl, min_cost));
+                }
+                dprintln!();
+            }
+        }
+    }
+}
+fn compute_block_yxz(
+    dp: DpTablePtr<Elem>,
+    from_x: usize,
+    to_x: usize,
+    from_y: usize,
+    to_y: usize,
+    from_z: usize,
+    to_z: usize,
+) {
+    for y in from_y..to_y {
+        for x in from_x..to_x {
+            for z in from_z..to_z {
+                if x == 0 && y == 0 && z == 0 {
+                    // Assume that [0][0][0] is already calculated.
+                    continue;
+                }
+
+                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                unsafe {
+                    dp.insert(x, y, z, (best_impl, min_cost));
+                }
+                dprintln!();
+            }
+        }
+    }
+}
+fn compute_block_yzx(
+    dp: DpTablePtr<Elem>,
+    from_x: usize,
+    to_x: usize,
+    from_y: usize,
+    to_y: usize,
+    from_z: usize,
+    to_z: usize,
+) {
+    for y in from_y..to_y {
+        for z in from_z..to_z {
+            for x in from_x..to_x {
+                if x == 0 && y == 0 && z == 0 {
+                    // Assume that [0][0][0] is already calculated.
+                    continue;
+                }
+
+                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                unsafe {
+                    dp.insert(x, y, z, (best_impl, min_cost));
+                }
+                dprintln!();
+            }
+        }
+    }
+}
+fn compute_block_zxy(
+    dp: DpTablePtr<Elem>,
+    from_x: usize,
+    to_x: usize,
+    from_y: usize,
+    to_y: usize,
+    from_z: usize,
+    to_z: usize,
+) {
+    for z in from_z..to_z {
+        for x in from_x..to_x {
+            for y in from_y..to_y {
+                if x == 0 && y == 0 && z == 0 {
+                    // Assume that [0][0][0] is already calculated.
+                    continue;
+                }
+
+                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                unsafe {
+                    dp.insert(x, y, z, (best_impl, min_cost));
+                }
+                dprintln!();
+            }
+        }
+    }
+}
+fn compute_block_zyx(
+    dp: DpTablePtr<Elem>,
+    from_x: usize,
+    to_x: usize,
+    from_y: usize,
+    to_y: usize,
+    from_z: usize,
+    to_z: usize,
+) {
+    for z in from_z..to_z {
+        for y in from_y..to_y {
+            for x in from_x..to_x {
+                if x == 0 && y == 0 && z == 0 {
+                    // Assume that [0][0][0] is already calculated.
+                    continue;
+                }
+
+                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                unsafe {
+                    dp.insert(x, y, z, (best_impl, min_cost));
+                }
+                dprintln!();
+            }
+        }
+    }
+}
+pub fn dp_xyz(spec: Spec, bsize: usize) -> Elem {
+    dp_impl(spec, bsize, compute_block_xyz)
+}
+pub fn dp_xzy(spec: Spec, bsize: usize) -> Elem {
+    dp_impl(spec, bsize, compute_block_xzy)
+}
+pub fn dp_yxz(spec: Spec, bsize: usize) -> Elem {
+    dp_impl(spec, bsize, compute_block_yxz)
+}
+pub fn dp_yzx(spec: Spec, bsize: usize) -> Elem {
+    dp_impl(spec, bsize, compute_block_yzx)
+}
+pub fn dp_zxy(spec: Spec, bsize: usize) -> Elem {
+    dp_impl(spec, bsize, compute_block_zxy)
+}
+pub fn dp_zyx(spec: Spec, bsize: usize) -> Elem {
+    dp_impl(spec, bsize, compute_block_zyx)
 }
 
 #[cfg(test)]
