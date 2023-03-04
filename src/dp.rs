@@ -126,6 +126,38 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
     dp_impl(spec, bsize, compute_block)
 }
 
+fn find_best_impl_xyz(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
+    let base_spec = Spec::new(inc(x), inc(y), inc(z));
+
+    let mut best_impl = Impl::default();
+    let mut min_cost = Cost::MAX;
+
+    for dep_x in 0..=x {
+        for dep_y in 0..=y {
+            for dep_z in 0..=z {
+                if dep_x == x && dep_y == y && dep_z == z {
+                    // skip itself
+                    continue;
+                }
+
+                let dep_impl = Impl::Loop {
+                    child: MatMul::new(inc(dep_x), inc(dep_y), inc(dep_z)),
+                };
+                let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
+                dprintln!("base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}");
+
+                if min_cost >= dep_cost {
+                    // >=: Take latter one if it has the same cost
+                    // >: Use the first impl even if there is the same cost
+                    min_cost = dep_cost;
+                    best_impl = dep_impl;
+                }
+            }
+        }
+    }
+
+    (best_impl.clone(), min_cost)
+}
 fn compute_block_xyz(
     dp: DpTablePtr<Elem>,
     from_x: usize,
@@ -143,7 +175,7 @@ fn compute_block_xyz(
                     continue;
                 }
 
-                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                let (best_impl, min_cost) = find_best_impl_xyz(dp.clone(), x, y, z);
                 unsafe {
                     dp.insert(x, y, z, (best_impl, min_cost));
                 }
@@ -151,6 +183,39 @@ fn compute_block_xyz(
             }
         }
     }
+}
+
+fn find_best_impl_xzy(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
+    let base_spec = Spec::new(inc(x), inc(y), inc(z));
+
+    let mut best_impl = Impl::default();
+    let mut min_cost = Cost::MAX;
+
+    for dep_x in 0..=x {
+        for dep_z in 0..=z {
+            for dep_y in 0..=y {
+                if dep_x == x && dep_y == y && dep_z == z {
+                    // skip itself
+                    continue;
+                }
+
+                let dep_impl = Impl::Loop {
+                    child: MatMul::new(inc(dep_x), inc(dep_y), inc(dep_z)),
+                };
+                let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
+                dprintln!("base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}");
+
+                if min_cost >= dep_cost {
+                    // >=: Take latter one if it has the same cost
+                    // >: Use the first impl even if there is the same cost
+                    min_cost = dep_cost;
+                    best_impl = dep_impl;
+                }
+            }
+        }
+    }
+
+    (best_impl.clone(), min_cost)
 }
 fn compute_block_xzy(
     dp: DpTablePtr<Elem>,
@@ -169,7 +234,7 @@ fn compute_block_xzy(
                     continue;
                 }
 
-                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                let (best_impl, min_cost) = find_best_impl_xzy(dp.clone(), x, y, z);
                 unsafe {
                     dp.insert(x, y, z, (best_impl, min_cost));
                 }
@@ -177,6 +242,39 @@ fn compute_block_xzy(
             }
         }
     }
+}
+
+fn find_best_impl_yxz(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
+    let base_spec = Spec::new(inc(x), inc(y), inc(z));
+
+    let mut best_impl = Impl::default();
+    let mut min_cost = Cost::MAX;
+
+    for dep_y in 0..=y {
+        for dep_x in 0..=x {
+            for dep_z in 0..=z {
+                if dep_x == x && dep_y == y && dep_z == z {
+                    // skip itself
+                    continue;
+                }
+
+                let dep_impl = Impl::Loop {
+                    child: MatMul::new(inc(dep_x), inc(dep_y), inc(dep_z)),
+                };
+                let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
+                dprintln!("base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}");
+
+                if min_cost >= dep_cost {
+                    // >=: Take latter one if it has the same cost
+                    // >: Use the first impl even if there is the same cost
+                    min_cost = dep_cost;
+                    best_impl = dep_impl;
+                }
+            }
+        }
+    }
+
+    (best_impl.clone(), min_cost)
 }
 fn compute_block_yxz(
     dp: DpTablePtr<Elem>,
@@ -195,7 +293,7 @@ fn compute_block_yxz(
                     continue;
                 }
 
-                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                let (best_impl, min_cost) = find_best_impl_yxz(dp.clone(), x, y, z);
                 unsafe {
                     dp.insert(x, y, z, (best_impl, min_cost));
                 }
@@ -203,6 +301,39 @@ fn compute_block_yxz(
             }
         }
     }
+}
+
+fn find_best_impl_yzx(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
+    let base_spec = Spec::new(inc(x), inc(y), inc(z));
+
+    let mut best_impl = Impl::default();
+    let mut min_cost = Cost::MAX;
+
+    for dep_y in 0..=y {
+        for dep_z in 0..=z {
+            for dep_x in 0..=x {
+                if dep_x == x && dep_y == y && dep_z == z {
+                    // skip itself
+                    continue;
+                }
+
+                let dep_impl = Impl::Loop {
+                    child: MatMul::new(inc(dep_x), inc(dep_y), inc(dep_z)),
+                };
+                let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
+                dprintln!("base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}");
+
+                if min_cost >= dep_cost {
+                    // >=: Take latter one if it has the same cost
+                    // >: Use the first impl even if there is the same cost
+                    min_cost = dep_cost;
+                    best_impl = dep_impl;
+                }
+            }
+        }
+    }
+
+    (best_impl.clone(), min_cost)
 }
 fn compute_block_yzx(
     dp: DpTablePtr<Elem>,
@@ -221,7 +352,7 @@ fn compute_block_yzx(
                     continue;
                 }
 
-                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                let (best_impl, min_cost) = find_best_impl_yzx(dp.clone(), x, y, z);
                 unsafe {
                     dp.insert(x, y, z, (best_impl, min_cost));
                 }
@@ -229,6 +360,39 @@ fn compute_block_yzx(
             }
         }
     }
+}
+
+fn find_best_impl_zxy(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
+    let base_spec = Spec::new(inc(x), inc(y), inc(z));
+
+    let mut best_impl = Impl::default();
+    let mut min_cost = Cost::MAX;
+
+    for dep_z in 0..=z {
+        for dep_x in 0..=x {
+            for dep_y in 0..=y {
+                if dep_x == x && dep_y == y && dep_z == z {
+                    // skip itself
+                    continue;
+                }
+
+                let dep_impl = Impl::Loop {
+                    child: MatMul::new(inc(dep_x), inc(dep_y), inc(dep_z)),
+                };
+                let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
+                dprintln!("base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}");
+
+                if min_cost >= dep_cost {
+                    // >=: Take latter one if it has the same cost
+                    // >: Use the first impl even if there is the same cost
+                    min_cost = dep_cost;
+                    best_impl = dep_impl;
+                }
+            }
+        }
+    }
+
+    (best_impl.clone(), min_cost)
 }
 fn compute_block_zxy(
     dp: DpTablePtr<Elem>,
@@ -247,7 +411,7 @@ fn compute_block_zxy(
                     continue;
                 }
 
-                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                let (best_impl, min_cost) = find_best_impl_zxy(dp.clone(), x, y, z);
                 unsafe {
                     dp.insert(x, y, z, (best_impl, min_cost));
                 }
@@ -255,6 +419,39 @@ fn compute_block_zxy(
             }
         }
     }
+}
+
+fn find_best_impl_zyx(dp: DpTablePtr<Elem>, x: usize, y: usize, z: usize) -> (Impl, Cost) {
+    let base_spec = Spec::new(inc(x), inc(y), inc(z));
+
+    let mut best_impl = Impl::default();
+    let mut min_cost = Cost::MAX;
+
+    for dep_z in 0..=z {
+        for dep_y in 0..=y {
+            for dep_x in 0..=x {
+                if dep_x == x && dep_y == y && dep_z == z {
+                    // skip itself
+                    continue;
+                }
+
+                let dep_impl = Impl::Loop {
+                    child: MatMul::new(inc(dep_x), inc(dep_y), inc(dep_z)),
+                };
+                let dep_cost = cost(base_spec, dep_impl.clone(), dp.clone());
+                dprintln!("base_spec: {base_spec:?}, dep_impl: {dep_impl:?}, dep_cost: {dep_cost}");
+
+                if min_cost >= dep_cost {
+                    // >=: Take latter one if it has the same cost
+                    // >: Use the first impl even if there is the same cost
+                    min_cost = dep_cost;
+                    best_impl = dep_impl;
+                }
+            }
+        }
+    }
+
+    (best_impl.clone(), min_cost)
 }
 fn compute_block_zyx(
     dp: DpTablePtr<Elem>,
@@ -273,7 +470,7 @@ fn compute_block_zyx(
                     continue;
                 }
 
-                let (best_impl, min_cost) = find_best_impl(dp.clone(), x, y, z);
+                let (best_impl, min_cost) = find_best_impl_zyx(dp.clone(), x, y, z);
                 unsafe {
                     dp.insert(x, y, z, (best_impl, min_cost));
                 }
