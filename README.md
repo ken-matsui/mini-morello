@@ -23,5 +23,5 @@ mv ./target/criterion/reports ./reports/7-something
 ```
 
 ```shell
-scp -r $NETID@attu7.cs.washington.edu:/homes/iws/$NETID/egg-drop/target/criterion/reports ./reports/7-something
+scp -r $NETID@attu7.cs.washington.edu:/homes/iws/$NETID/morello-rs/target/criterion/reports ./reports/7-something
 ```

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Index - Criterion.rs</title>
+    <style type="text/css">body {
+        font: 14px Helvetica Neue;
+        text-rendering: optimizelegibility;
+    }
+
+    .body {
+        width: 960px;
+        margin: auto;
+    }
+
+    a:link {
+        color: #1F78B4;
+        text-decoration: none;
+    }
+
+    h2 {
+        font-size: 36px;
+        font-weight: 300;
+    }
+
+    h3 {
+        font-size: 24px;
+        font-weight: 300;
+    }
+
+    #footer {
+        height: 40px;
+        background: #888;
+        color: white;
+        font-size: larger;
+        font-weight: 300;
+    }
+
+    #footer a {
+        color: white;
+        text-decoration: underline;
+    }
+
+    #footer p {
+        text-align: center
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+
+    table,
+    th,
+    td {
+        border: 1px solid #888;
+    }
+    </style>
+</head>
+
+<body>
+<div class="body">
+    <h2>Criterion.rs Benchmark Index</h2>
+    <h3>Environments</h3>
+    <h4>env1:</h4>
+    <p>$ uname -m</p>
+    <p>arm64</p>
+    <p>$ sysctl -a | grep machdep.cpu.thread_count</p>
+    <p>machdep.cpu.thread_count: 10</p>
+    <p>$ sysctl -a | grep machdep.cpu.brand_string</p>
+    <p>machdep.cpu.brand_string: Apple M1 Pro</p>
+    <p>$ sysctl -a | egrep 'hw\.l.*cache'</p>
+    <p>hw.l1icachesize: 131072</p>
+    <p>hw.l1dcachesize: 65536</p>
+    <p>hw.l2cachesize: 4194304</p>
+
+    <h4>env2:</h4>
+    <p>$ uname -m</p>
+    <p>x86_64</p>
+    <p>$ nproc --all</p>
+    <p>8</p>
+    <p>$ lscpu | grep 'Model name'</p>
+    <p>Model name:                      11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz</p>
+    <p>$ lscpu | grep "cache"</p>
+    <p>L1d cache:                       192 KiB (4 instances)</p>
+    <p>L1i cache:                       128 KiB (4 instances)</p>
+    <p>L2 cache:                        5 MiB (4 instances)</p>
+    <p>L3 cache:                        12 MiB (1 instance)</p>
+
+    <h4>attu7:</h4>
+    <p>$ uname -m</p>
+    <p>x86_64</p>
+    <p>$ nproc --all</p>
+    <p>56</p>
+    <p>$ lscpu | grep 'Model name'</p>
+    <p>Model name:                      Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz</p>
+    <p>$ lscpu | grep "cache"</p>
+    <p>L1d cache:                       896 KiB (28 instances)</p>
+    <p>L1i cache:                       896 KiB (28 instances)</p>
+    <p>L2 cache:                        28 MiB (28 instances)</p>
+    <p>L3 cache:                        38.5 MiB (2 instances)</p>
+    <p>Vulnerability L1tf:              Mitigation; PTE Inversion; VMX conditional cache flushes, SMT vulnerable</p>
+
+    <h3>Reports</h3>
+    <h4>Settings common across all benchmarks:</h4>
+    <p>Sample size: 10 measurements</p>
+    <p>Warm-up time: 3 s</p>
+    <p>Measurement time: 5 s</p>
+    <p>Bootstrap size: 100 000 resamples</p>
+    <p>Noise threshold: 0.01 (1%)</p>
+    <p>Confidence level: 0.95</p>
+    <p>Significance level: 0.05</p>
+
+    <h4>List of benchmarks:</h4>
+    <ol>
+        <li>
+            <a href="1-serial-vs-parallel/index.html">optimum-bsize</a>
+            <p>Serial Impl vs Parallel Impl</p>
+            <br>
+            <p>Environment: env1</p>
+            <p>spec: 100*100*100</p>
+            <p>block: 10</p>
+        </li>
+    </ol>
+</div>
+</body>
+</html>

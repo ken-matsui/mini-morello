@@ -126,6 +126,43 @@ pub fn dp(spec: Spec, bsize: usize) -> Elem {
     dp_impl(spec, bsize, compute_block)
 }
 
+/// bsize: block size such that bsize^3
+fn serial_dp_impl(spec: Spec, bsize: usize, compute_block_fn: ComputeBlockFn) -> Elem {
+    #[allow(non_snake_case)]
+    let X = spec.x;
+    #[allow(non_snake_case)]
+    let Y = spec.y;
+    #[allow(non_snake_case)]
+    let Z = spec.z;
+
+    let mut dp = DpTable::<Elem>::new(X, Y, Z);
+    dp.insert(0, 0, 0, (Impl::Mult, 1));
+    let dp_p = dp.as_mut_ptr();
+
+    for offset in (0..=(X + Y + Z - 3)).step_by(bsize) {
+        for z in (0..=offset).step_by(bsize) {
+            for y in (0..=(offset - z)).step_by(bsize) {
+                let x = offset - y;
+                if x < X && y < Y && z < Z {
+                    let to_x = if x + bsize < X { x + bsize } else { X };
+                    let to_y = if y + bsize < Y { y + bsize } else { Y };
+                    let to_z = if z + bsize < Z { z + bsize } else { Z };
+                    dprintln!("({x}, {y}, {z})..({to_x}, {to_y}, {to_z})");
+                    compute_block_fn(dp_p.clone(), x, to_x, y, to_y, z, to_z);
+                }
+            }
+        }
+        dprintln!();
+    }
+    dprintln!("\n{:?}", dp);
+
+    dp.get(dec(X), dec(Y), dec(Z)).clone()
+}
+
+pub fn serial_dp(spec: Spec, bsize: usize) -> Elem {
+    serial_dp_impl(spec, bsize, compute_block)
+}
+
 fn compute_block_xyz(
     dp: DpTablePtr<Elem>,
     from_x: usize,
@@ -319,6 +356,29 @@ mod tests {
         );
         assert_eq!(
             dp(Spec::new(4, 4, 1), 2),
+            (
+                Impl::Loop {
+                    child: MatMul::new(4, 2, 1)
+                },
+                16
+            )
+        );
+    }
+
+    #[test]
+    fn test_serial_dp() {
+        assert_eq!(serial_dp(Spec::new(1, 1, 1), 1), (Impl::Mult, 1));
+        assert_eq!(
+            serial_dp(Spec::new(2, 2, 1), 1),
+            (
+                Impl::Loop {
+                    child: MatMul::new(2, 1, 1)
+                },
+                4
+            )
+        );
+        assert_eq!(
+            serial_dp(Spec::new(4, 4, 1), 2),
             (
                 Impl::Loop {
                     child: MatMul::new(4, 2, 1)
