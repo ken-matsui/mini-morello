@@ -4,18 +4,13 @@ use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Through
 
 fn bench(c: &mut Criterion) {
     let spec = Spec::new(100, 100, 100);
-    let bsize = 10; // best bsize for 100*100*100 spec except for < 10
+    let bsize = 10;
 
     let mut group = c.benchmark_group("DP");
     group.sample_size(10); // 10 is minimum required; default is 100
     #[allow(clippy::single_element_loop)]
     for parameter in [bsize].iter() {
         group.throughput(Throughput::Elements(*parameter as u64));
-        group.bench_with_input(
-            BenchmarkId::new("serial", parameter),
-            parameter,
-            |b, par| b.iter(|| serial_dp(spec.clone(), *par)),
-        );
         group.bench_with_input(
             BenchmarkId::new("parallel", parameter),
             parameter,
