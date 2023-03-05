@@ -2,7 +2,6 @@ use std::fmt::{Debug, Formatter};
 
 pub type Spec = MatMul;
 
-/// x > 0, y > 0, z > 0
 #[derive(Copy, Clone, PartialEq)]
 pub struct MatMul {
     pub(crate) x: usize,
@@ -14,6 +13,7 @@ impl Eq for MatMul {}
 
 impl MatMul {
     pub fn new(x: usize, y: usize, z: usize) -> Self {
+        assert!(x > 0 && y > 0 && z > 0, "x,y,z must be >0");
         Self { x, y, z }
     }
 }
