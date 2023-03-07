@@ -12,7 +12,12 @@ fn bench(c: &mut Criterion) {
     for parameter in [bsize].iter() {
         group.throughput(Throughput::Elements(*parameter as u64));
         group.bench_with_input(
-            BenchmarkId::new("Parallel", parameter),
+            BenchmarkId::new("serial", parameter),
+            parameter,
+            |b, par| b.iter(|| serial_dp(spec.clone(), *par)),
+        );
+        group.bench_with_input(
+            BenchmarkId::new("parallel", parameter),
             parameter,
             |b, par| b.iter(|| dp(spec.clone(), *par)),
         );
