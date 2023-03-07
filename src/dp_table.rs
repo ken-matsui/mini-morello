@@ -61,11 +61,12 @@ impl<V: Default + Clone> DpTable<V> {
 impl<V: Default + Clone + Debug> Debug for DpTable<V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         for z in 0..self.Z {
+            writeln!(f, "z = {z}")?;
             for x in 0..self.X {
                 for y in 0..self.Y {
                     write!(f, "|{}", format!("{:?}", self.get(x, y, z)).cyan())?;
                 }
-                write!(f, "| ")?;
+                writeln!(f, "|")?;
             }
             writeln!(f)?;
         }
