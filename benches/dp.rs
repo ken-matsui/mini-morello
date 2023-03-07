@@ -12,34 +12,9 @@ fn bench(c: &mut Criterion) {
     for parameter in [bsize].iter() {
         group.throughput(Throughput::Elements(*parameter as u64));
         group.bench_with_input(
-            BenchmarkId::new("x -> y -> z", parameter),
+            BenchmarkId::new("Parallel", parameter),
             parameter,
-            |b, par| b.iter(|| dp_xyz(spec.clone(), *par)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("x -> z -> y", parameter),
-            parameter,
-            |b, par| b.iter(|| dp_xzy(spec.clone(), *par)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("y -> x -> z", parameter),
-            parameter,
-            |b, par| b.iter(|| dp_yxz(spec.clone(), *par)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("y -> z -> x", parameter),
-            parameter,
-            |b, par| b.iter(|| dp_yzx(spec.clone(), *par)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("z -> x -> y", parameter),
-            parameter,
-            |b, par| b.iter(|| dp_zxy(spec.clone(), *par)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("z -> y -> x", parameter),
-            parameter,
-            |b, par| b.iter(|| dp_zyx(spec.clone(), *par)),
+            |b, par| b.iter(|| dp(spec.clone(), *par)),
         );
     }
     group.finish();
