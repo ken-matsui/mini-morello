@@ -189,4 +189,27 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    fn test_serial_dp() {
+        assert_eq!(serial_dp(Spec::new(1, 1, 1), 1), (Impl::Mult, 1));
+        assert_eq!(
+            serial_dp(Spec::new(2, 2, 1), 1),
+            (
+                Impl::Loop {
+                    child: MatMul::new(2, 1, 1)
+                },
+                4
+            )
+        );
+        assert_eq!(
+            serial_dp(Spec::new(4, 4, 1), 2),
+            (
+                Impl::Loop {
+                    child: MatMul::new(4, 2, 1)
+                },
+                16
+            )
+        );
+    }
 }
